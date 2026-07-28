@@ -1,0 +1,57 @@
+# ===================== IDE 编辑器 =====================
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# ===================== Python 缓存 =====================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ===================== 环境变量、密钥【重要！】 =====================
+.env
+.env.local
+.env.dev
+.env.prod
+
+# ===================== 数据库文件 =====================
+*.sqlite
+*.sqlite3
+*.db
+
+# ===================== uv / python 虚拟环境 =====================
+.venv/
+venv/
+
+# ===================== 日志、临时文件 =====================
+logs/
+*.log
+tmp/
+temp/
+
+# ===================== Alembic 注意 =====================
+# migrations/ 整个文件夹不要忽略！迁移脚本必须提交
+# 只忽略迁移产生的本地数据库，不要屏蔽migrations目录
+
+# ===================== OS系统垃圾文件 =====================
+.DS_Store
+Thumbs.db
