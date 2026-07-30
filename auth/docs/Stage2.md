@@ -17,6 +17,24 @@
 ↓
 返回用户信息
 ```
+### 注册功能数据流
+```text
+客户端
+POST /auth/register
+↓
+UserRegisterRequest
+(Pydantic Schema)
+↓
+AuthService
+(业务逻辑)
+↓
+UserRepository
+(数据库操作)
+↓
+SQLAlchemy ORM
+↓
+PostgreSQL
+```
 ## 第一步：设计Schema（接口契约）
 前后端通过接口通信，需要明确接口数据字段相关信息
 
