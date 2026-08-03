@@ -10,6 +10,9 @@ from sqlalchemy.exc import IntegrityError
 
 from auth.schemas.response import ResponseModel
 
+from auth.core.logger import logger
+import traceback
+
 
 async def business_exception_handler(request: Request, exc: BusinessException):
     return JSONResponse(
@@ -38,6 +41,10 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 
 async def database_exception_handler(request: Request, exc: IntegrityError):
+    logger.error(
+        f"Database error occurred: {request.url}",
+        exc_info=True
+    )
     return JSONResponse(
         status_code=500,
         content=error_response(ErrorCode.DATABASE_ERROR).model_dump()
@@ -45,6 +52,11 @@ async def database_exception_handler(request: Request, exc: IntegrityError):
 
 
 async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(
+        f"Unhandled exception:"
+        f"{request.url}",
+        exc_info=True  # 自动记录（Traceback、文件、行号、错误原因）
+    )
     return JSONResponse(
         status_code=500,
         content=error_response(ErrorCode.INTERNAL_ERROR).model_dump()

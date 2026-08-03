@@ -27,7 +27,7 @@ class ErrorCode(Enum):
     )
     EMAIL_EXISTS = (
         10002,
-        "email exists",
+        "email already exists",
         409
     )
     USER_NOT_EXISTS = (

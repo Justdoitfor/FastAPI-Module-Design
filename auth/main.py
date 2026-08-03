@@ -12,6 +12,8 @@ from auth.core.exception_handler import (
 from fastapi import HTTPException
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError
+from auth.core.logger import logger
+logger.info("Application started")
 
 app = FastAPI(
     title="Auth System",
