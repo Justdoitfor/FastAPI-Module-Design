@@ -2,6 +2,7 @@ from auth.core.security import hash_password
 from auth.repositories.user_repository import UserRepository
 from auth.schemas.auth import UserRegisterRequest
 from auth.models.user import User
+from auth.core.exceptions import UsernameAlreadyExists, EmailAlreadyExists
 
 
 class AuthService:
@@ -15,15 +16,11 @@ class AuthService:
         # 检查用户名是否存在
         exist_user = await self.user_repository.get_by_username(data.username)
         if exist_user:
-            raise ValueError(
-                "username already exists!"
-            )
+            raise UsernameAlreadyExists()
         # 检查邮箱是否存在
         exist_user = await self.user_repository.get_by_email(data.email)
         if exist_user:
-            raise ValueError(
-                "email already exists!"
-            )
+            raise EmailAlreadyExists()
         # 密码加密
         password_hash = hash_password(data.password)
         # 创建ORM对象
