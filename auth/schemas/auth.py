@@ -30,5 +30,21 @@ class UserRegisterRequest(BaseSchema):
 
 class UserLoginRequest(BaseSchema):
     """用户登录请求"""
-    username: str
-    password: str
+    username: Username
+    password: Password
+
+
+class TokenResponse(BaseSchema):
+    """Token响应"""
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+
+class RefreshTokenRequest(BaseSchema):
+    refresh_token: str
+
+
+class RefreshTokenResponse(BaseSchema):
+    access_token: str
+    token_type: str = "bearer"

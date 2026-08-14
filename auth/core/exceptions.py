@@ -1,5 +1,6 @@
 from auth.core.error_codes import ErrorCode
 
+
 class BusinessException(Exception):
     """业务异常基类"""
 
@@ -22,14 +23,31 @@ class BusinessException(Exception):
     def status_code(self):
         return self.error_code.status_code
 
+
 class UsernameAlreadyExists(BusinessException):
     def __init__(self):
         super().__init__(
             ErrorCode.USERNAME_EXISTS
         )
 
+
 class EmailAlreadyExists(BusinessException):
     def __init__(self):
         super().__init__(
             ErrorCode.EMAIL_EXISTS
         )
+
+
+class UserNotExist(BusinessException):
+    def __init__(self):
+        super().__init__(ErrorCode.USER_NOT_EXISTS)
+
+
+class InvalidPassword(BusinessException):
+    def __init__(self):
+        super().__init__(ErrorCode.INVALID_PASSWORD)
+
+
+class InvalidRefreshToken(BusinessException):
+    def __init__(self):
+        super().__init__(ErrorCode.INVALID_REFRESH_TOKEN)

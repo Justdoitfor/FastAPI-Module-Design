@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from auth.database.session import engine
-from auth.api import auth
+from auth.api import auth, user
 from auth.core.exceptions import BusinessException
 from auth.core.exception_handler import (
     business_exception_handler,
@@ -20,6 +20,7 @@ app = FastAPI(
     version="1.0.0",
 )
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(user.router, prefix="/api/v1")
 app.add_exception_handler(BusinessException, business_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)

@@ -5,6 +5,15 @@ class ErrorCode(Enum):
     """
     系统错误码定义
     """
+    def __init__(
+            self,
+            code: int,
+            message: str,
+            status_code: int,
+    ):
+        self.code = code
+        self.message = message
+        self.status_code = status_code
 
     # 通用错误
 
@@ -56,12 +65,8 @@ class ErrorCode(Enum):
         500
     )
 
-    def __init__(
-            self,
-            code: int,
-            message: str,
-            status_code: int,
-    ):
-        self.code = code
-        self.message = message
-        self.status_code = status_code
+    INVALID_REFRESH_TOKEN = (
+        11002,
+        "invalid refresh token",
+        401
+    )
