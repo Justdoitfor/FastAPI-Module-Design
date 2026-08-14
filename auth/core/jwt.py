@@ -4,7 +4,16 @@ from jose import jwt, JWTError
 from auth.core.config import settings
 
 
-def create_token(user_id: int, token_type: str, expires_delta: timedelta) -> str:
+def create_family_id() -> str:
+    return str(uuid.uuid4())
+
+
+def create_token(
+        user_id: int,
+        token_type: str,
+        expires_delta: timedelta,
+        family_id: str | None = None
+) -> str:
     """创建JWT Token"""
     now = datetime.now(timezone.utc)
     expire = now + expires_delta
@@ -15,6 +24,8 @@ def create_token(user_id: int, token_type: str, expires_delta: timedelta) -> str
         "iat": now,  # Issued at -> Token签发时间
         "exp": expire  # token 过期时间
     }
+    if family_id:
+        payload["family_id"] = family_id
     return jwt.encode(
         payload,
         settings.JWT_SECRET_KEY,
@@ -31,11 +42,12 @@ def create_access_token(user_id: int):
     )
 
 
-def create_refresh_token(user_id: int):
+def create_refresh_token(user_id: int, family_id: str):
     """ 创建 Refresh Token """
     return create_token(
         user_id=user_id,
         token_type="refresh",
+        family_id=family_id,
         expires_delta=timedelta(days=int(settings.REFRESH_TOKEN_EXPIRE_DAYS)),
     )
 

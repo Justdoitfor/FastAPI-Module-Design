@@ -31,7 +31,7 @@ async def login(
     return success(token)
 
 
-@router.post("/refresh", response_model=ResponseModel[RefreshTokenResponse])
+@router.post("/refresh", response_model=ResponseModel[TokenResponse])
 async def refresh_token(
         data: RefreshTokenRequest,
         service: AuthService = Depends(get_auth_service),

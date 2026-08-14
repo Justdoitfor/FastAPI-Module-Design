@@ -1,16 +1,26 @@
 from datetime import datetime, timezone
 
 from auth.core.security import hash_password, verify_password
-from auth.core.jwt import create_access_token, create_refresh_token, verify_refresh_token, decode_token
+from auth.core.jwt import (
+    create_access_token,
+    create_refresh_token,
+    verify_refresh_token,
+    decode_token,
+    create_family_id,
+)
 from auth.repositories.user_repository import UserRepository
 from auth.schemas.auth import UserRegisterRequest, TokenResponse
 from auth.models.user import User
-from auth.core.exceptions import (UsernameAlreadyExists,
-                                  EmailAlreadyExists,
-                                  InvalidPassword,
-                                  UserNotExist, InvalidRefreshToken)
+from auth.core.exceptions import (
+    UsernameAlreadyExists,
+    EmailAlreadyExists,
+    InvalidPassword,
+    UserNotExist,
+    InvalidRefreshToken,
+    RefreshTokenReuseError,
+)
 from auth.core.logger import logger
-from auth.services.token_service import TokenService
+from auth.services.token_service import TokenService, RefreshTokenStatus
 
 
 class AuthService:
@@ -58,7 +68,8 @@ class AuthService:
         if not is_valid:
             raise InvalidPassword()
         access_token = create_access_token(user.id)
-        refresh_token = create_refresh_token(user.id)
+        family_id = create_family_id()
+        refresh_token = create_refresh_token(user.id, family_id=family_id)
 
         refresh_payload = decode_token(refresh_token)
         jti = refresh_payload.get("jti")
@@ -71,6 +82,7 @@ class AuthService:
         await self.token_service.register_refresh_token(
             jti=jti,
             user_id=user.id,
+            family_id=family_id,
             ttl=ttl,
         )
         return TokenResponse(
@@ -87,19 +99,51 @@ class AuthService:
             payload = verify_refresh_token(refresh_token)
         except ValueError:
             raise InvalidRefreshToken()
-        jti = payload.get("jti")
-        if not jti:
+        old_jti = payload.get("jti")
+        if not old_jti:
             raise InvalidRefreshToken()
 
-        user_id = await self.token_service.get_refresh_token_user_id(jti)
-        if not user_id:
+        status, token_data = await self.token_service.consume_refresh_token(old_jti)
+        if status == RefreshTokenStatus.REUSED:
+            assert token_data is not None
+            family_id = token_data.get("family_id")
+            await self.token_service.revoke_family(family_id=family_id, ttl=86400)
+            raise RefreshTokenReuseError()
+
+        if status == RefreshTokenStatus.INVALID:
+            raise InvalidRefreshToken()
+
+        assert token_data is not None
+
+        user_id = token_data.get("user_id")
+        family_id = token_data.get("family_id")
+
+        if await self.token_service.is_family_revoked(family_id=family_id):
             raise InvalidRefreshToken()
 
         user = await self.user_repository.get_by_id(int(user_id))
         if not user:
             raise UserNotExist()
         access_token = create_access_token(user.id)
-        return {"access_token": access_token, "token_type": "bearer"}
+        new_refresh_token = create_refresh_token(user_id=user.id, family_id=family_id)
+        new_payload = decode_token(new_refresh_token)
+        new_jti = new_payload.get("jti")
+        new_exp = new_payload.get("exp")
+        now = int(datetime.now(timezone.utc).timestamp())
+        ttl = new_exp - now
+        if ttl <= 0:
+            raise InvalidRefreshToken()
+        await self.token_service.register_refresh_token(
+            jti=new_jti,
+            user_id=user.id,
+            family_id=family_id,
+            ttl=ttl,
+        )
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=new_refresh_token,
+            token_type="bearer",
+        )
 
     async def logout(
             self,

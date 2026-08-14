@@ -5,6 +5,7 @@ class ErrorCode(Enum):
     """
     系统错误码定义
     """
+
     def __init__(
             self,
             code: int,
@@ -68,5 +69,11 @@ class ErrorCode(Enum):
     INVALID_REFRESH_TOKEN = (
         11002,
         "invalid refresh token",
+        401
+    )
+
+    Refresh_Token_Reuse = (
+        11003,
+        "refresh token reuse",
         401
     )

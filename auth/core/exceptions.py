@@ -51,3 +51,8 @@ class InvalidPassword(BusinessException):
 class InvalidRefreshToken(BusinessException):
     def __init__(self):
         super().__init__(ErrorCode.INVALID_REFRESH_TOKEN)
+
+
+class RefreshTokenReuseError(BusinessException):
+    def __init__(self):
+        super().__init__(ErrorCode.Refresh_Token_Reuse)
