@@ -48,3 +48,6 @@ class RefreshTokenRequest(BaseSchema):
 class RefreshTokenResponse(BaseSchema):
     access_token: str
     token_type: str = "bearer"
+
+class LogoutRequest(BaseSchema):
+    refresh_token: str

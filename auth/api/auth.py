@@ -1,6 +1,6 @@
 from fastapi import Depends, APIRouter
 from auth.schemas.auth import UserRegisterRequest, UserLoginRequest, TokenResponse, RefreshTokenRequest, \
-    RefreshTokenResponse
+    RefreshTokenResponse, LogoutRequest
 from auth.schemas.response import ResponseModel
 from auth.schemas.user import UserResponse
 from auth.services.auth_service import AuthService
@@ -38,3 +38,14 @@ async def refresh_token(
 ):
     result = await service.refresh_access_token(data.refresh_token)
     return success(result)
+
+
+@router.post("/logout")
+async def logout(
+        data: LogoutRequest,
+        service: AuthService = Depends(get_auth_service),
+):
+    await service.logout(
+        data.refresh_token
+    )
+    return success()

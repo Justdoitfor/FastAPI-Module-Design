@@ -100,3 +100,18 @@ class AuthService:
             raise UserNotExist()
         access_token = create_access_token(user.id)
         return {"access_token": access_token, "token_type": "bearer"}
+
+    async def logout(
+            self,
+            refresh_token: str,
+    ) -> None:
+        try:
+            payload = verify_refresh_token(refresh_token)
+        except ValueError:
+            raise InvalidRefreshToken()
+
+        jti = payload.get("jti")
+        if not jti:
+            raise InvalidRefreshToken()
+
+        await self.token_service.revoke_refresh_token(jti=jti)

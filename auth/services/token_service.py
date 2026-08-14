@@ -26,3 +26,10 @@ class TokenService:
         if user_id is None:
             return None
         return int(user_id)
+
+    async def revoke_refresh_token(
+            self,
+            jti: str,
+    ) -> None:
+        key = self._refresh_key(jti)
+        await redis_client.delete(key)
