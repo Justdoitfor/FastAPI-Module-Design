@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
     REDIS_PASSWORD: str | None = None
 
+    @property
+    def refresh_token_ttl(self) -> int:
+        return int(self.REFRESH_TOKEN_EXPIRE_DAYS) * 24 * 60 * 60
+
     model_config = {"env_file": ".env"}
     # class Config:
     #     env_file = ".env"

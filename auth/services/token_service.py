@@ -1,5 +1,5 @@
 from typing import TypedDict
-
+from auth.core.config import settings
 from auth.core.redis import redis_client
 from enum import Enum
 import json
@@ -102,7 +102,7 @@ class TokenService:
             2,
             key,
             revoked_key,
-            86400,
+            settings.refresh_token_ttl,
         )
         status = result[0]
 

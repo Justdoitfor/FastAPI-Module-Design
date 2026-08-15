@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from auth.core.config import settings
 from auth.core.security import hash_password, verify_password
 from auth.core.jwt import (
     create_access_token,
@@ -107,7 +108,7 @@ class AuthService:
         if status == RefreshTokenStatus.REUSED:
             assert token_data is not None
             family_id = token_data.get("family_id")
-            await self.token_service.revoke_family(family_id=family_id, ttl=86400)
+            await self.token_service.revoke_family(family_id=family_id, ttl=settings.refresh_token_ttl)
             raise RefreshTokenReuseError()
 
         if status == RefreshTokenStatus.INVALID:
