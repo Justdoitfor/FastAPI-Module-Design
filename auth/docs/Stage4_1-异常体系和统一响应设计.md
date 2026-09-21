@@ -183,9 +183,10 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 ### 注册到main.py
 main.py
+
 ```python
 from fastapi import FastAPI
-from auth.database.session import engine
+from db.session import engine
 from auth.api import auth
 from auth.core.exceptions import BusinessException
 from auth.core.exception_handler import (

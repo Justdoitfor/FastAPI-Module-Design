@@ -8,7 +8,7 @@ from auth.core.config import settings
 # 使用异步engine，提高吞吐
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=True, # 打印SQL调试
+    echo=False, # 是否打印SQL调试
 )
 # 会话工厂
 AsyncSessionLocal = async_sessionmaker(

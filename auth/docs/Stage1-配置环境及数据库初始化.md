@@ -137,6 +137,7 @@ class Base(DeclarativeBase):
 ```
 
 # 创建User模型
+
 ```python
 from sqlalchemy import (
     String,
@@ -147,56 +148,56 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 
-from auth.database.base import Base
+from db.base import Base
 
 
 class User(Base):
-    __tablename__="users"
+    __tablename__ = "users"
 
-    id:Mapped[int]=mapped_column(
+    id: Mapped[int] = mapped_column(
         primary_key=True,
         index=True
     )
 
-    username:Mapped[str]=mapped_column(
+    username: Mapped[str] = mapped_column(
         String(50),
         unique=True,
         nullable=False
     )
 
-    email:Mapped[str]=mapped_column(
+    email: Mapped[str] = mapped_column(
         String(100),
         unique=True,
         index=True,
         nullable=False
     )
 
-    password_hash:Mapped[str]=mapped_column(
+    password_hash: Mapped[str] = mapped_column(
         String(255),
         nullable=False
     )
 
-    avatar:Mapped[str|None]=mapped_column(
+    avatar: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True
     )
 
-    role:Mapped[str]=mapped_column(
+    role: Mapped[str] = mapped_column(
         String(20),
         default="user"
     )
-    
-    is_active:Mapped[bool]=mapped_column(
+
+    is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True
     )
-    
-    created_at:Mapped[datetime]=mapped_column(
+
+    created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow
     )
-    
-    updated_at:Mapped[datetime]=mapped_column(
+
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow
@@ -219,8 +220,10 @@ from .user import User
 
 # 测试数据库连接
 main.py
+
 ```python
-from auth.database.session import engine
+from db.session import engine
+
 
 @app.on_event("startup")
 async def startup():
@@ -251,9 +254,10 @@ alembic init migrations
 修改默认配置文件，数据库连接配置通过之前配置的settings中的来自.env文件的配置
 
 修改migrations/env.py, 增加如下修改
+
 ```python
 from auth.core.config import settings
-from auth.database.base import Base
+from db.base import Base
 from auth.models import *
 
 target_metadata = Base.metadata
