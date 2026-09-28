@@ -1,6 +1,6 @@
 BASE = "/api/v1/auth"
 CREDENTIALS = {
-    "email": "a@example.com",
+    "email": "b@example.com",
     "password": "passw0rd",
 }
 
@@ -58,6 +58,7 @@ async def test_login_nonexistent_user_same_error_as_wrong_password(client):
 # ---------------- 受保护接口 ----------------
 async def test_me_requires_token(client):
     resp = await client.get(f"{BASE}/me")
+    print(resp.json())
     assert resp.status_code == 401
 
 

@@ -1,11 +1,20 @@
 import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from app.api.deps import get_db
+import app.models  # 保证所有 Model 在 create_all() 之前被加载
 from app.db.base import Base
-from app.main import app
+from app.domains.auth.models import User
+from app.domains.auth.security import hash_password
+
+
+async def _make_user(session_factory, email: str) -> User:
+    async with session_factory() as session:
+        user = User(email=email, hashed_password=hash_password("passw0rd"))
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        return user
 
 
 @pytest_asyncio.fixture
@@ -22,7 +31,22 @@ async def session_factory():
 
 
 @pytest_asyncio.fixture
-async def client(session_factory):
+async def user(session_factory) -> User:
+    return await _make_user(session_factory, "owner@example.com")
+
+
+@pytest_asyncio.fixture
+async def other_user(session_factory) -> User:
+    return await _make_user(session_factory, "other@example.com")
+
+
+@pytest_asyncio.fixture
+async def client(session_factory):  # 不再依赖 user，也不再覆盖 get_current_user
+    from httpx import ASGITransport, AsyncClient
+
+    from app.api.deps import get_db
+    from app.main import app
+
     async def override_get_db():
         async with session_factory() as session:
             yield session

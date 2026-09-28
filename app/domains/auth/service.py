@@ -37,7 +37,7 @@ class AuthService:
 
     async def register(self, data: UserCreate) -> User:
         if await self.users.get_by_email(data.email) is not None:
-            raise ConflictError("改邮箱已被注册")
+            raise ConflictError("该邮箱已被注册")
         user = User(
             email=data.email,
             hashed_password=hash_password(data.password),

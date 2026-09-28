@@ -20,7 +20,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def need_rehash(hashed_password: str) -> bool:
-    return not password_hasher.verify_and_update(hashed_password, hashed_password)[0]
+    # 第二个返回值是新hash；这里只看：是否算法过时需要重哈希
+    _, updated_hash = password_hasher.verify_and_update("", hashed_password)
+    return updated_hash is not None
 
 class TokenType(Enum):
     ACCESS = 'access'
