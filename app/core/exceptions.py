@@ -31,3 +31,8 @@ class BusinessError(AppException):
     status_code: int = 422
     code: str = "business_rule_violation"
     message = "不满足业务规则"
+
+class RateLimitError(AppException):
+    status_code: int = 429
+    code: str = "rate_limited"
+    message = "请求过于频繁，请稍后重试"

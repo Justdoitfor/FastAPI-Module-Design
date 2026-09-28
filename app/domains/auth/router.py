@@ -2,6 +2,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 
 from app.api.deps import DbDep
+from app.api.rate_limit import rate_limit
+
 from app.domains.auth.deps import ActiveUser
 from app.domains.auth.schemas import RefreshRequest, TokenPair, UserCreate, UserLogin, UserRead
 from app.domains.auth.service import AuthService
@@ -21,7 +23,11 @@ async def register(data: UserCreate, service: ServiceDep):
     return await service.register(data)
 
 
-@router.post("/login", response_model=TokenPair, status_code=status.HTTP_200_OK)
+@router.post(
+    "/login",
+    response_model=TokenPair,
+    dependencies=[Depends(rate_limit(limit=5, window=60, scope="login", fail_open=False))],
+    status_code=status.HTTP_200_OK)
 async def login(data: UserLogin, service: ServiceDep):
     return await service.login(data.email, data.password)
 

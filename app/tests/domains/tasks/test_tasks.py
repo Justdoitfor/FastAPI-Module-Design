@@ -10,6 +10,7 @@ async def test_create_and_get_task(client):
     assert body["title"] == "写教程" and body["status"] == "todo"
 
     resp = await client.get(f"{URL}/{body['id']}")
+    print(resp.status_code, resp.json())
     assert resp.status_code == 200
 
 

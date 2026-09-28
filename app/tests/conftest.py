@@ -1,8 +1,12 @@
 import pytest_asyncio
+import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
+from fakeredis import FakeAsyncRedis
+
 import app.models  # 保证所有 Model 在 create_all() 之前被加载
+from app.core.config import settings
 from app.db.base import Base
 from app.domains.auth.models import User
 from app.domains.auth.security import hash_password
@@ -15,6 +19,13 @@ async def _make_user(session_factory, email: str) -> User:
         await session.commit()
         await session.refresh(user)
         return user
+
+
+@pytest.fixture(autouse=True)
+def _disable_rate_limit(monkeypatch):
+    # 默认关闭限流：②里"连续创建 25 个任务"的用例会被 20 次/分钟的限制拦住
+    # 限流相关测试再通过 打开
+    monkeypatch.setattr(settings, "RATE_LIMIT_ENABLED", False)
 
 
 @pytest_asyncio.fixture
@@ -31,6 +42,14 @@ async def session_factory():
 
 
 @pytest_asyncio.fixture
+async def redis():
+    r = FakeAsyncRedis(decode_responses=True)
+    yield r
+    await r.flushall()
+    await r.aclose()
+
+
+@pytest_asyncio.fixture
 async def user(session_factory) -> User:
     return await _make_user(session_factory, "owner@example.com")
 
@@ -39,12 +58,15 @@ async def user(session_factory) -> User:
 async def other_user(session_factory) -> User:
     return await _make_user(session_factory, "other@example.com")
 
+@pytest.fixture
+def enable_rate_limit(monkeypatch):
+    monkeypatch.setattr(settings, "RATE_LIMIT_ENABLED", True)
 
 @pytest_asyncio.fixture
-async def client(session_factory):  # 不再依赖 user，也不再覆盖 get_current_user
+async def client(session_factory, redis):  # 不再依赖 user，也不再覆盖 get_current_user
     from httpx import ASGITransport, AsyncClient
 
-    from app.api.deps import get_db
+    from app.api.deps import get_db, get_redis
     from app.main import app
 
     async def override_get_db():
@@ -52,6 +74,7 @@ async def client(session_factory):  # 不再依赖 user，也不再覆盖 get_cu
             yield session
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_redis] = lambda: redis
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
     app.dependency_overrides.clear()
