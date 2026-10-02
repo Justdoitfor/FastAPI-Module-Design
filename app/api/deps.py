@@ -9,6 +9,8 @@ from redis.asyncio import Redis
 from app.cache.cache import Cache
 from app.cache.rate_limiter import RateLimiter
 
+from app.queue.client import ArqJobQueue, JobQueue
+
 
 async def get_db():
     async with async_session_factory() as session:
@@ -37,3 +39,8 @@ def get_rate_limiter(redis: RedisDep) -> RateLimiter:
 
 
 LimiterDep = Annotated[RateLimiter, Depends(get_rate_limiter)]
+
+def get_job_queue(request: Request) -> JobQueue:
+    return ArqJobQueue(request.app.state.queue_pool)
+
+JobQueueDep = Annotated[JobQueue, Depends(get_job_queue)]

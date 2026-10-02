@@ -62,6 +62,7 @@ class TaskService:
         values = data.model_dump(exclude_unset=True)
         if "due_date" in values:
             self._validate_due_date(values["due_date"])
+            values["reminded_at"] = None
         await self.tasks.update(task, values)
         await self.session.commit()
         await self._invalidate(user.id, task.id)
@@ -90,11 +91,9 @@ class TaskService:
         await self.cache.bump_version(self._list_scope(user_id))
 
     @staticmethod
-    def _list_scope( user_id: int) -> str:
+    def _list_scope(user_id: int) -> str:
         return f"tasks:{user_id}"
 
     @staticmethod
     def _digest(query: TaskQuery) -> str:
         return hashlib.sha256(query.model_dump_json().encode()).hexdigest()[:16]
-
-

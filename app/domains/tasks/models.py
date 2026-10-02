@@ -1,7 +1,8 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, SmallInteger, String, Text
+from alembic.ddl import postgresql
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, SmallInteger, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, SoftDeleteMixin, TimestampMixin
@@ -21,7 +22,13 @@ class TaskPriority(enum.IntEnum):
 
 class Task(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "tasks"
-    __table_args__ = (Index("ix_tasks_owner_status", "owner_id", "status"),)
+    __table_args__ = (
+        Index("ix_tasks_owner_status", "owner_id", "status"),
+        Index(
+            "ix_tasks_due_pending",
+            "due_date",
+            postgresql_where = text("reminded_at IS NULL AND deleted_at IS NULL"),),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(255))
@@ -37,3 +44,4 @@ class Task(Base, TimestampMixin, SoftDeleteMixin):
     due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    reminded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)

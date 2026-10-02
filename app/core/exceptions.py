@@ -36,3 +36,8 @@ class RateLimitError(AppException):
     status_code: int = 429
     code: str = "rate_limited"
     message = "请求过于频繁，请稍后重试"
+
+class QueueUnavailableError(AppException):
+    status_code: int = 503
+    code: str = "queue_unavailable"
+    message = "后台服务暂时不可用，请稍后再试"

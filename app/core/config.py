@@ -12,5 +12,13 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    EMAIL_FROM: str = "noreply@example.com"
+
+    EXPORT_DIR: str = "./exports"
+
 
 settings = Settings()

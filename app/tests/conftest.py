@@ -11,6 +11,9 @@ from app.db.base import Base
 from app.domains.auth.models import User
 from app.domains.auth.security import hash_password
 
+from app.integrations.email import EmailDeliveryError
+from app.queue.client import JobSnapshot, JobState
+
 
 async def _make_user(session_factory, email: str) -> User:
     async with session_factory() as session:
@@ -78,3 +81,42 @@ async def client(session_factory, redis):  # 不再依赖 user，也不再覆盖
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
     app.dependency_overrides.clear()
+
+
+class FakeJobQueue:
+    def __init__(self) -> None:
+        self.enqueued: list[tuple[str, tuple, str]] = []
+        self.snapshots: dict[str, JobSnapshot] = {}
+
+    async def enqueue(self, function, *args, job_id=None, defer_by=None):
+        from uuid import uuid4
+        if job_id and job_id in self.snapshots:
+            return None
+        job_id = job_id or uuid4().hex
+        self.enqueued.append((function, args, job_id))
+        self.snapshots[job_id] = JobSnapshot(JobState.QUEUED)
+        return job_id
+
+    async def get(self, job_id: str) -> JobSnapshot:
+        return self.snapshots.get(job_id, JobSnapshot(JobState.NOT_FOUND))
+
+
+class FakeEmailSender:
+    def __init__(self) -> None:
+        self.sent: list[tuple[str, str, str]] = []
+        self.fail = False
+
+    async def send(self, *, to: str, subject: str, body: str) -> None:
+        if self.fail:
+            raise EmailDeliveryError("smtp down")
+        self.sent.append((to, subject, body))
+
+
+@pytest_asyncio.fixture
+async def job_queue() -> FakeJobQueue:
+    return FakeJobQueue()
+
+
+@pytest_asyncio.fixture
+async def email() -> FakeEmailSender:
+    return FakeEmailSender()
