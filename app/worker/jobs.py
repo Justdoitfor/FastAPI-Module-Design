@@ -1,4 +1,10 @@
 from app.domains.exports.service import export_tasks
 from app.domains.reminders.service import scan_due_tasks, send_due_reminder
+from app.domains.attachments.service import cleanup_attachments
 
-ALL_JOBS = [send_due_reminder, scan_due_tasks, export_tasks]
+ALL_JOBS = [
+    send_due_reminder,
+    scan_due_tasks,
+    export_tasks,
+    cleanup_attachments,
+]

@@ -3,10 +3,14 @@ from arq.connections import RedisSettings
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.core.config import settings
+from app.domains.attachments.service import cleanup_attachments
 from app.integrations.email import build_email_sender
 from app.queue.names import QUEUE_NAME
 from app.worker.jobs import ALL_JOBS
 from app.domains.reminders.service import scan_due_tasks
+from app.storage.s3 import S3Storage
+
+from contextlib import AsyncExitStack
 
 
 async def startup(ctx: dict) -> None:
@@ -23,15 +27,22 @@ async def startup(ctx: dict) -> None:
     from app.core.redis import create_redis
     ctx["redis"] = create_redis(settings.REDIS_URL)
 
+    ctx["stack"] = AsyncExitStack()
+    ctx["storage"] = await S3Storage.create(ctx["stack"])
+
 
 async def shutdown(ctx: dict) -> None:
+    await ctx["stack"].aclose()
     await ctx["redis"].aclose()
     await ctx["engine"].dispose()
 
 
 class WorkerSettings:
     functions = [func(job, max_tries=5) for job in ALL_JOBS]
-    cron_jobs = [cron(scan_due_tasks, minute=set(range(0, 60, 5)), run_at_startup=False)]
+    cron_jobs = [
+        cron(scan_due_tasks, minute=set(range(0, 60, 5)), run_at_startup=False),
+        cron(cleanup_attachments, minute=17),
+    ]
 
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
     queue_name = QUEUE_NAME

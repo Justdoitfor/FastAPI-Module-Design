@@ -624,9 +624,10 @@ async def get_export(job_id: str, request: Request, user: ActiveUser, service: S
     url = (str(request.url_for("download_export", job_id=job_id)) if job_status == "succeeded" else None)
     return ExportJobRead(job_id=job_id, status=job_status, download_url=url)
 
+
 @router.get("/{job_id}/download", name="download_export")
 async def download_export(job_id: str, user: ActiveUser, service: ServiceDep):
-    path = await service.get_file(user, job_id)
+    path = await service.get_download_url(user, job_id)
     return FileResponse(path, media_type="text/csv", filename="tasks.csv")
 
 ```

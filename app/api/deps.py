@@ -10,6 +10,7 @@ from app.cache.cache import Cache
 from app.cache.rate_limiter import RateLimiter
 
 from app.queue.client import ArqJobQueue, JobQueue
+from app.storage.base import ObjectStorage
 
 
 async def get_db():
@@ -44,3 +45,8 @@ def get_job_queue(request: Request) -> JobQueue:
     return ArqJobQueue(request.app.state.queue_pool)
 
 JobQueueDep = Annotated[JobQueue, Depends(get_job_queue)]
+
+def get_storage(request: Request) -> ObjectStorage:
+    return request.app.state.storage
+
+StorageDep = Annotated[ObjectStorage, Depends(get_storage)]

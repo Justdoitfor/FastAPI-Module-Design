@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest_asyncio
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -13,6 +15,9 @@ from app.domains.auth.security import hash_password
 
 from app.integrations.email import EmailDeliveryError
 from app.queue.client import JobSnapshot, JobState
+
+from app.api.deps import get_storage
+from app.storage.base import ObjectMeta, PresignedPost
 
 
 async def _make_user(session_factory, email: str) -> User:
@@ -120,3 +125,34 @@ async def job_queue() -> FakeJobQueue:
 @pytest_asyncio.fixture
 async def email() -> FakeEmailSender:
     return FakeEmailSender()
+
+class FakeStorage:
+    def __init__(self) -> None:
+        self.objects: dict[str, tuple[bytes, str]] = {}
+
+    async def upload_fileobj(self, key, fileobj, *, content_type):
+        self.objects[key] = (fileobj.read(), content_type)
+
+    async def upload_file(self, key, path, *, content_type):
+        self.objects[key] = (Path(path).read_bytes(), content_type)
+
+    async def head(self, key):
+        obj = self.objects.get(key)
+        return ObjectMeta(len(obj[0]), obj[1]) if obj else None
+
+    async def read_head(self, key, size=2048):
+        return self.objects[key][0][:size]
+
+    async def delete(self, key):
+        self.objects.pop(key, None)
+
+    async def presign_get(self, key, *, expires, filename=None):
+        return f"https://files.test/{key}?exp={expires}"
+
+    async def presign_post(self, key, *, content_type, max_size, expires):
+        return PresignedPost("https://files.test/upload", {"key": key, "Content-Type": content_type})
+
+
+@pytest.fixture
+def storage() -> FakeStorage:
+    return FakeStorage()

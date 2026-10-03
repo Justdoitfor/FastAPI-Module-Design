@@ -18,7 +18,14 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str | None = None
     EMAIL_FROM: str = "noreply@example.com"
 
-    EXPORT_DIR: str = "./exports"
+    # EXPORT_DIR: str = "./exports"
+
+    S3_ENDPOINT_URL: str | None = None
+    S3_PUBLIC_ENDPOINT_URL: str | None = None
+    S3_REGION: str = "us-east-1"
+    S3_ACCESS_KEY: str | None = None
+    S3_SECRET_KEY: str | None = None
+    S3_BUCKET: str = "app-files"
 
 
 settings = Settings()

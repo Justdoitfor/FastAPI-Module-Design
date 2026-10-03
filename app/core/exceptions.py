@@ -41,3 +41,13 @@ class QueueUnavailableError(AppException):
     status_code: int = 503
     code: str = "queue_unavailable"
     message = "后台服务暂时不可用，请稍后再试"
+
+class PayloadTooLargeError(AppException):
+    status_code: int = 413
+    code: str = "payload_too_large"
+    message = "文件过大"
+
+class UnsupportedMediaTypeError(AppException):
+    status_code: int = 415
+    code: str = "unsupported_media_type"
+    message = "不支持的文件类型"

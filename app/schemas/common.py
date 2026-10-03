@@ -14,6 +14,7 @@ class PageParams(BaseModel):
     def offset(self) -> int:
         return (self.page - 1) * self.size
 
+
 class Page(BaseModel, Generic[T]):
     items: list[T]
     total: int
@@ -30,3 +31,8 @@ class Page(BaseModel, Generic[T]):
             size=params.size,
             pages=math.ceil(total / params.size) if total else 0,
         )
+
+
+class DownloadLink(BaseModel):
+    url: str
+    expires_in: int
