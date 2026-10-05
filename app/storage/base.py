@@ -37,3 +37,7 @@ class ObjectStorage(Protocol):
     async def presign_post(self, key: str, *, content_type: str, max_size: int, expires: int) -> PresignedPost:
         pass
 
+    async def ping(self) -> None:
+        pass
+
+

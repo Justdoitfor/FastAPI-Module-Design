@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Literal
 
 
 class Settings(BaseSettings):
@@ -26,6 +27,21 @@ class Settings(BaseSettings):
     S3_ACCESS_KEY: str | None = None
     S3_SECRET_KEY: str | None = None
     S3_BUCKET: str = "app-files"
+
+    ENV: Literal["local", "test", "staging", "production"] = "local"
+    SERVICE_NAME: str = "myapi"
+    RELEASE: str = "dev"
+
+    LOG_LEVEL: str = "INFO"
+    LOG_JSON: bool = True
+    SLOW_REQUEST_SECONDS: float = 1.0
+
+    METRIC_PORT: int | None = 9100
+    WORKER_METRICS_PORT:int | None = 9101
+
+    OTEL_ENABLED: bool = False
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4317"
+    OTEL_SAMPLE_RATIO: float = 1.0
 
 
 settings = Settings()

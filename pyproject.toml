@@ -15,6 +15,13 @@ dependencies = [
     "fastapi>=0.140.0",
     "filetype>=1.2.0",
     "httpx>=0.28.1",
+    "opentelemetry-exporter-otlp>=1.45.0",
+    "opentelemetry-instrumentation-botocore>=0.66b0",
+    "opentelemetry-instrumentation-fastapi>=0.66b0",
+    "opentelemetry-instrumentation-redis>=0.66b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.66b0",
+    "opentelemetry-sdk>=1.45.0",
+    "prometheus-client>=0.26.0",
     "psycopg2-binary>=2.9.12",
     "pwdlib[argon2]>=0.3.0",
     "pydantic-settings>=2.14.2",
@@ -26,6 +33,7 @@ dependencies = [
     "python-multipart>=0.0.32",
     "redis>=8.0.1",
     "sqlalchemy>=2.0.51",
+    "structlog>=26.1.0",
     "uvicorn>=0.51.0",
 ]
 [tool.pytest.ini_options]

@@ -1,4 +1,6 @@
 from typing import Annotated
+
+import structlog.contextvars
 from fastapi import Depends, HTTPException, status
 
 from fastapi.security import OAuth2PasswordBearer
@@ -17,7 +19,7 @@ oauth2_scheme = OAuth2PasswordBearer(
 async def get_current_user(
         session: DbDep,
         token: Annotated[str | None, Depends(oauth2_scheme)],
-) -> User:
+) -> User | None:
     if token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -27,7 +29,9 @@ async def get_current_user(
     user_id = decode_access_token(token)
     user = await UserRepository(session).get(user_id)
     if user is None:
-        raise InvalidTokenError
+        raise InvalidTokenError()
+    structlog.contextvars.bind_contextvars(user_id=user.id)
+
     return user
 
 

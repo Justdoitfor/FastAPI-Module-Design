@@ -1,3 +1,8 @@
+import os
+os.environ.setdefault("ENV", "test")
+os.environ.setdefault("LOG_JSON", "false")
+os.environ.setdefault("OTEL_ENABLED", "false")
+
 from pathlib import Path
 
 import pytest_asyncio
@@ -151,6 +156,9 @@ class FakeStorage:
 
     async def presign_post(self, key, *, content_type, max_size, expires):
         return PresignedPost("https://files.test/upload", {"key": key, "Content-Type": content_type})
+
+    async def ping(self) -> None:
+        pass
 
 
 @pytest.fixture

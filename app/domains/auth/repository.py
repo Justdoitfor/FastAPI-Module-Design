@@ -7,7 +7,7 @@ from app.db.repository import BaseRepository
 from app.domains.auth.models import User, RefreshToken
 
 
-class UserRepository(BaseRepository):
+class UserRepository(BaseRepository[User]):
     model = User
 
     async def get_by_email(self, email: EmailStr) -> User | None:

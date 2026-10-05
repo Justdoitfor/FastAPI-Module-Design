@@ -6,6 +6,7 @@ from app.domains.attachments.router import router as attachment_router
 
 from app.api.rate_limit import rate_limit
 
+API_PREFIX = "/api/v1"
 
 api_router = APIRouter(
     dependencies=[Depends(rate_limit(limit=300, window=60, scope="global"))],

@@ -8,6 +8,7 @@ from app.domains.tasks.models import Task
 from app.domains.tasks.repository import TaskRepository
 from app.domains.tasks.schemas import TaskCreate, TaskQuery, TaskUpdate, TaskRead
 
+
 import hashlib
 from app.cache.cache import Cache
 from app.schemas.common import Page
@@ -30,7 +31,7 @@ class TaskService:
             tasks, total = await self.tasks.list_by_owner(user.id, query)
             return Page[TaskRead].build(items=tasks, total=total, params=query)
 
-        page = await self.cache.get_or_load(key, Page[TaskRead], load, ttl=self.LIST_TTL)
+        page = await self.cache.get_or_load(key, Page[TaskRead], load, ttl=self.LIST_TTL, name="task_list")
         assert page is not None
         return page
 
@@ -43,7 +44,8 @@ class TaskService:
             self.cache.key("task", task_id),
             TaskRead,
             load,
-            ttl=self.DETAIL_TTL
+            ttl=self.DETAIL_TTL,
+            name="task_detail",
         )
         if task is None or task.owner_id != user.id:
             raise NotFoundError("任务不存在")

@@ -3,10 +3,12 @@ import logging
 import random
 from collections.abc import Awaitable, Callable
 from typing import TypeVar
+from unittest import result
 
 from pydantic import BaseModel, ValidationError
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
+from app.core.metrics import CACHE_REQUESTS
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +39,10 @@ class Cache:
             *,
             ttl: int,
             null_ttl: int = 30,
+            name: str = "default",
     ) -> M | None:
         hit, value = await self._read(key, model)
+        CACHE_REQUESTS.labels(name=name, result="hit" if hit else "miss").inc()
         if hit:
             return value
         lock_key = f"{key}:lock"

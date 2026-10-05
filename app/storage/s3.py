@@ -101,4 +101,5 @@ class S3Storage:
             fields=resp["fields"],
         )
 
-
+    async def ping(self) -> None:
+        await self._client.head_bucket(Bucket=self._bucket)

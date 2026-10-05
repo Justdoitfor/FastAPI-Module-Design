@@ -8,6 +8,9 @@ from arq.connections import ArqRedis
 from arq.jobs import Job, JobStatus
 from redis.exceptions import RedisError
 
+import structlog
+from opentelemetry.propagate import inject
+
 from app.core.exceptions import QueueUnavailableError
 
 logger = logging.getLogger(__name__)
@@ -55,12 +58,20 @@ class ArqJobQueue:
             job_id: str | None = None,
             defer_by: timedelta | None = None,
     ) -> str | None:
+        carrier: dict[str, str] = {}
+        inject(carrier)
+        obs_ctx = {
+            "request_id": structlog.contextvars.get_contextvars().get("request_id"),
+            "trace": carrier,
+        }
+
         try:
             job = await self._pool.enqueue_job(
                 function,
                 *args,
                 _job_id=job_id,
                 _defer_by=defer_by,
+                obs_ctx=obs_ctx,
             )
         except RedisError as e:
             logger.error(f"enqueue failed:{function}", exc_info=True)
@@ -84,4 +95,3 @@ class ArqJobQueue:
             return JobSnapshot(JobState.QUEUED)
         except RedisError as e:
             raise QueueUnavailableError() from e
-

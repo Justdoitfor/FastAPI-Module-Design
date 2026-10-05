@@ -10,6 +10,9 @@ from app.queue.client import JobQueue, ArqJobQueue
 from app.queue.names import JOB_SEND_DUE_REMINDER
 from app.worker.observability import instrumented_job
 
+from app.core.metrics import QUEUE_DEPTH
+from app.queue.names import QUEUE_NAME
+
 logger = logging.getLogger(__name__)
 
 REMINDER_WINDOW = timedelta(hours=1)
@@ -50,6 +53,10 @@ class ReminderService:
         return "sent"
 
 
+async def report_queue_depth(ctx: dict) -> None:
+    QUEUE_DEPTH.set(await ctx["redis"].zcard(QUEUE_NAME))
+
+
 @instrumented_job
 async def scan_due_tasks(ctx: dict) -> int:
     async with ctx["session_factory"]() as session:
@@ -69,4 +76,3 @@ async def send_due_reminder(ctx: dict, task_id: int) -> str:
             if attempt >= 5:
                 raise
             raise Retry(defer=attempt ** 2 * 10) from e
-

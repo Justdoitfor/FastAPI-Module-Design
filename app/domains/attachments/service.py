@@ -11,6 +11,7 @@ import filetype
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
+    AppException,
     BusinessError,
     ConflictError,
     NotFoundError,
@@ -27,6 +28,8 @@ from app.domains.tasks.repository import TaskRepository
 from app.schemas.common import DownloadLink
 from app.storage.base import ObjectStorage
 from app.worker.observability import instrumented_job
+
+from app.core.metrics import UPLOADS
 
 logger = logging.getLogger(__name__)
 
@@ -65,36 +68,13 @@ class AttachmentService:
         self.attachments = AttachmentRepository(session)
 
     async def upload(self, user: User, task_id: int, file: IncomingFile) -> AttachmentRead:
-        task = await self._get_owned_task(user, task_id)
-        await self._ensure_quota(task.id)
-        size = self._measure(file.fileobj)
-        if size == 0:
-            raise BusinessError("文件为空")
-        if size > MAX_UPLOAD_SIZE:
-            raise PayloadTooLargeError(f"文件大小不能超过 {MAX_UPLOAD_SIZE // 1024 // 1024} MB")
-        head = file.fileobj.read(SNIFF_BYTES)
-        file.fileobj.seek(0)
-        mime = self._sniff(head)
-
-        key = self._make_key(user.id, task_id, mime)
-        await self.storage.upload_fileobj(key, file.fileobj, content_type=mime)
         try:
-            attachment = await self.attachments.create(
-                Attachment(
-                    task_id=task_id,
-                    owner_id=user.id,
-                    object_key=key,
-                    filename=sanitize_filename(file.filename),
-                    content_type=mime,
-                    size=size,
-                    status=AttachmentStatus.READY,
-                )
-            )
-            await self.session.commit()
-        except Exception:
-            await self._delete_object_quietly(key)
+            attachment = await self._upload(user, task_id, file)
+        except AppException as e:
+            UPLOADS.labels(path="key", result=e.code).inc()
             raise
-        return AttachmentRead.model_validate(attachment)
+        UPLOADS.labels(path="relay", result="success").inc()
+        return attachment
 
     async def init_upload(
             self,
@@ -217,6 +197,38 @@ class AttachmentService:
         await self.attachments.soft_delete(attachment)
         await self.session.commit()
         raise exc
+
+    async def _upload(self, user: User, task_id: int, file: IncomingFile) -> AttachmentRead:
+        task = await self._get_owned_task(user, task_id)
+        await self._ensure_quota(task.id)
+        size = self._measure(file.fileobj)
+        if size == 0:
+            raise BusinessError("文件为空")
+        if size > MAX_UPLOAD_SIZE:
+            raise PayloadTooLargeError(f"文件大小不能超过 {MAX_UPLOAD_SIZE // 1024 // 1024} MB")
+        head = file.fileobj.read(SNIFF_BYTES)
+        file.fileobj.seek(0)
+        mime = self._sniff(head)
+
+        key = self._make_key(user.id, task_id, mime)
+        await self.storage.upload_fileobj(key, file.fileobj, content_type=mime)
+        try:
+            attachment = await self.attachments.create(
+                Attachment(
+                    task_id=task_id,
+                    owner_id=user.id,
+                    object_key=key,
+                    filename=sanitize_filename(file.filename),
+                    content_type=mime,
+                    size=size,
+                    status=AttachmentStatus.READY,
+                )
+            )
+            await self.session.commit()
+        except Exception:
+            await self._delete_object_quietly(key)
+            raise
+        return AttachmentRead.model_validate(attachment)
 
     @staticmethod
     def _measure(fileobj: BinaryIO) -> int:

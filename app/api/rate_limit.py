@@ -9,6 +9,8 @@ from app.core.exceptions import RateLimitError
 from app.domains.auth.deps import get_current_user
 from app.domains.auth.models import User
 
+from app.core.metrics import RATE_LIMIT_DECISIONS
+
 
 async def ip_identifier(request: Request) -> str:
     return f"ip:{request.client.host if request.client else 'unknown'}"
@@ -51,5 +53,7 @@ def rate_limit(
             raise RateLimitError(headers=headers)
 
         response.headers.update(headers)
+
+        RATE_LIMIT_DECISIONS.labels(scope=scope, decision="allowed" if result.allowed else "blocked").inc()
 
     return dependency
